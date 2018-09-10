@@ -1,54 +1,69 @@
-// Code your testbench here
-// or browse Examples
 `timescale 1ns / 1ps
 
-module testasemaforo;
+`include "cpu-module.v" 
+`include "periferic-module.v" 
 
-    // Inputs
-    reg TA;
-    reg TB;
-    reg clk;
-    reg rst;
+module testbench;
 
-    // Outputs
-    wire [1:0] LA;
-    wire [1:0] LB;
+	reg firstRun, secondRun;
+	reg clk1, rst1;
+	reg clk2, rst2;
+	wire send, ack;
+  	wire [3:0] data;
 
-    // Instantiate the Unit Under Test (UUT)
-    fsmAulaSinaleira uut (
-        .TA(TA),  
-        .TB(TB),  
-        .LA(LA),  
-        .LB(LB),  
-        .clk(clk),  
-        .rst(rst)
-    );
+	fsmPeriferic fsmPeriferic (
+		.clk(clk1), 
+      	.rst(rst1),
+      	.ack(ack),
+		.send(send), 
+		.newData(data)
+	);
 
+  	fsmCPU fsmCPU (
+		.clk(clk2), 
+		.rst(rst2),
+    	.ack(ack),
+    	.send(send),
+    	.data(data)
+	);
+  
+  	initial begin
+    	$dumpfile("dump.vcd");
+    	$dumpvars(3);
+
+        clk1 = 0;
+        rst1 = 1;
+        clk2 = 0;
+        rst2 = 1;
+		
+      	#200
+        
+      	rst1 = 0;
+        rst2 = 0;
+
+    	#2000 
+    
+        firstRun = 0;
+        secondRun = 0;
+  	end
+
+	// PERIFERIC
     initial begin
-      $dumpfile("dump.vcd");
-      $dumpvars;
-        // Initialize Inputs
-        TA = 0;
-        TB = 0;
-        clk = 0;
-        rst = 1;
-
-        // Wait 100 ns for global reset to finish
-        #100;
-        rst = 0;
-        #100
-         
-        // Add stimulus here
-        TA = 1;
-        #50;
-        TB = 1;
-        #10;
-        TA = 0;
-        #30;
-        TB = 0;
-        TA = 1;
-     
-      $finish;
+     	clk1 = 0;
+        firstRun = 1;
+      	while (firstRun) begin
+        	#50 clk1 = ~clk1;
+      	end
     end
-   always #5 clk = !clk;
+
+	// CPU
+	initial begin
+  		clk2 = 0;
+  		#50
+  		secondRun = 1;
+      	while (secondRun) begin
+    		#25 clk2 = ~clk2;
+  		end
+	end
+  
 endmodule
